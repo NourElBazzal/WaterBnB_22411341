@@ -16,11 +16,17 @@ from pymongo import MongoClient
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Initialisation :  Mongo DataBase
 
+from urllib.parse import quote_plus
+username = quote_plus("nourbazzal4")
+password = quote_plus("nour@mongodb2025")  # Escape '@' in the password
+uri = f"mongodb+srv://{username}:{password}@iot.rll4q.mongodb.net/"
+
 # Connect to Cluster Mongo : attention aux permissions "network"/MONGO  !!!!!!!!!!!!!!!!
 ADMIN=False # Faut etre ADMIN/mongo pour ecrire dans la base
 #client = MongoClient("mongodb+srv://menez:i.....Q@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
 #client = MongoClient("mongodb+srv://logincfsujet:pwdcfsujet@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
-client = MongoClient("mongodb+srv://visitor:doliprane@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
+#client = MongoClient("mongodb+srv://visitor:doliprane@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
+client = MongoClient(uri)
 
 #-----------------------------------------------------------------------------
 # Looking for "WaterBnB" database in the cluster
