@@ -1,32 +1,43 @@
 import json
 import csv
+import math
 
 from flask import request
 from flask import jsonify
 from flask import Flask
 from flask import session
 from flask import render_template
+from flask_socketio import SocketIO
+
+
 #https://python-adv-web-apps.readthedocs.io/en/latest/flask.html
 
 #https://www.emqx.com/en/blog/how-to-use-mqtt-in-flask
 from flask_mqtt import Mqtt
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
+import datetime
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Initialisation :  Mongo DataBase
-
 from urllib.parse import quote_plus
+
 username = quote_plus("nourbazzal4")
-password = quote_plus("nour@mongodb2025")  # Escape '@' in the password
-uri = f"mongodb+srv://{username}:{password}@iot.rll4q.mongodb.net/"
+password = quote_plus("nour@mongodb2025")  # Escape any special characters
+cluster_url = "iot.rll4q.mongodb.net"
+database_name = "WaterBnB"
+
+connection_string = f"mongodb+srv://{username}:{password}@{cluster_url}/{database_name}?retryWrites=true&w=majority"
+
+
 
 # Connect to Cluster Mongo : attention aux permissions "network"/MONGO  !!!!!!!!!!!!!!!!
 ADMIN=False # Faut etre ADMIN/mongo pour ecrire dans la base
 #client = MongoClient("mongodb+srv://menez:i.....Q@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
 #client = MongoClient("mongodb+srv://logincfsujet:pwdcfsujet@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
 #client = MongoClient("mongodb+srv://visitor:doliprane@cluster0.x0zyf.mongodb.net/?retryWrites=true&w=majority")
-client = MongoClient(uri)
+client = MongoClient(connection_string)
+print(client.list_database_names())
 
 #-----------------------------------------------------------------------------
 # Looking for "WaterBnB" database in the cluster
@@ -39,6 +50,18 @@ else:
     print("YOU HAVE to CREATE the db !\n")
 
 db = client.WaterBnB
+
+collection = db["pools"]
+
+# Fetch all documents
+documents = list(collection.find())
+if documents:
+    print(f"The 'pools' collection contains {len(documents)} document(s):")
+    for doc in documents:
+        print(doc)
+else:
+    print("The 'pools' collection is empty.")
+    
 
 #-----------------------------------------------------------------------------
 # Looking for "users" collection in the WaterBnB database
@@ -73,11 +96,13 @@ app = Flask(__name__)
 # https://www.fullstackpython.com/flask-globals-session-examples.html
 # https://stackoverflow.com/questions/49664010/using-variables-across-flask-routes
 app.secret_key = 'BAD_SECRET_KEY'
+
+socketio = SocketIO(app)
   
 #-----------------------------------------------------------------------------
 @app.route('/')
-def hello_world():
-    return render_template('index.html') #'Hello, World!'
+def dashboard():
+    return render_template('index.html')
 
 #Test with =>  curl https://waterbnbf.onrender.com/
 
@@ -99,6 +124,11 @@ def client():
     ip_addr = request.environ['REMOTE_ADDR']
     return '<h1> Your IP address is:' + ip_addr
 """
+
+@app.route('/api/pools', methods=['GET'])
+def get_pools():
+    pools = list(db.pools.find({}, {'_id': 0}))  # Exclude MongoDB's _id field
+    return jsonify(pools)
 
 #https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
 #If a request goes through multiple proxies, the IP addresses of each successive proxy is listed.
@@ -167,33 +197,54 @@ def handle_connect(client, userdata, flags, rc):
        mqtt_client.subscribe(topicname) # subscribe topic
    else:
        print('Bad connection. Code:', rc)
-
+       
 
 @mqtt_client.on_message()
 def handle_mqtt_message(client, userdata, msg):
-    global topicname
-    
-    data = dict(
-        topic=msg.topic,
-        payload=msg.payload.decode()
-    )
-    #    print('Received message on topic: {topic} with payload: {payload}'.format(**data))
-    print("\n msg.topic = {}".format(msg.topic))
-    print("\n topicname = {}".format(topicname))
-    
-    if (msg.topic == topicname) : # cf https://stackoverflow.com/questions/63580034/paho-updating-userdata-from-on-message-callback
-        decoded_message =str(msg.payload.decode("utf-8"))
-        #print("\ndecoded message received = {}".format(decoded_message))
-        dic =json.loads(decoded_message) # from string to dict
-        print("\n Dictionnary  received = {}".format(dic))
+    try:
+        # Decode the MQTT message
+        message = msg.payload.decode()
+        data = json.loads(message)
+        print(f"Received data: {data}")
 
-        who = dic["info"]["ident"] # Qui a publié ?
-        t = dic["status"]["temperature"] # Quelle température ?
+        # Extract pool details
+        pool_id = data["info"]["ident"]
+        lat = data.get("location", {}).get("gps", {}).get("lat", None)
+        lon = data.get("location", {}).get("gps", {}).get("lon", None)
+        temperature = data["status"]["temperature"]
+        light_intensity = data["status"]["light_intensity"]
+        fire_detected = data["status"]["fire_detected"]
+        hotspot = data["piscine"]["hotspot"]
+        occuped = data["piscine"]["occuped"]
+        
+        # Create or update the pool document in MongoDB
+        db.pools.update_one(
+            {"pool_id": pool_id},  # Match by pool ID
+            {
+                "$set": {
+                    "lat": lat,
+                    "lon": lon,
+                    "temperature": temperature,
+                    "light_intensity": light_intensity,
+                    "fire_detected": fire_detected,
+                    "hotspot": hotspot,
+                    "occuped": occuped,
+                    "last_updated": datetime.datetime.utcnow()
+                }
+            },
+            upsert=True  # Insert if no matching document is found
+        )
+        print(f"Pool {pool_id} data inserted/updated in MongoDB.")
+    except Exception as e:
+        print(f"Error processing MQTT message: {e}")
+        
+    socketio.emit('update', data)  # Broadcast new data to all connected clients
 
 
 #%%%%%%%%%%%%%  main driver function
 if __name__ == '__main__':
-    
+    mqtt_client.subscribe(topicname)
+    print(f"Subscribed to topic: {topicname}")
     # run() method of Flask class runs the application 
     # on the local development server.
     app.run(debug=False) #host='127.0.0.1', port=5000)

@@ -1,42 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <title>WaterBnB</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pool Dashboard</title>
     <style>
-      .todo {
-          padding: 20px;
-          margin: 10px;
-          background-color: #eee;
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+
+      h1 {
+        text-align: center;
+        background-color: #007bff;
+        color: white;
+        padding: 20px;
+        margin: 0;
+      }
+
+      table {
+        width: 90%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: center;
+      }
+
+      th {
+        background-color: #f4f4f4;
+        color: #333;
+        font-weight: bold;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      tr:hover {
+        background-color: #f1f1f1;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 12px;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .badge-hotspot-yes {
+        background-color: #dc3545;
+      }
+
+      .badge-hotspot-no {
+        background-color: #28a745;
+      }
+
+      .badge-occupied-yes {
+        background-color: #007bff;
+      }
+
+      .badge-occupied-no {
+        background-color: #6c757d;
+      }
+
+      footer {
+        text-align: center;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
       }
     </style>
   </head>
   <body>
-    <h1>WaterBnB Front page :  If you need ? </h1>
-    <hr>
-    <div class="content">
-      <form method="post">
-        <p>
-          <b><label for="content">Todo content</label></b>
-        </p>
-        <p>
-          <input type="text" name="content"
-                 placeholder="Todo Content"></input>
-        </p>
+    <h1>Pool Dashboard</h1>
+    <input
+      type="text"
+      id="searchBar"
+      placeholder="Search by Pool ID"
+      style="width: 90%; margin: 10px auto; padding: 10px; display: block"
+    />
 
-        <p>
-          <b><label for="degree">Degree</label></b>
-        </p>
-        <p>
-          <input id="degree-0" name="degree" required type="radio" value="Important">
-          <label for="degree-0">Important</label>
-        </p>
-        <p>
-          <input id="degree-1" name="degree" required type="radio" value="Unimportant">
-          <label for="degree-1">Unimportant</label>
-        </p>
-        <button type="submit">Submit</button>
-      </form>
-    </div>
+    <table id="poolTable">
+      <thead>
+        <tr>
+          <th>Pool ID</th>
+          <th>Temperature (°C)</th>
+          <th>Hotspot</th>
+          <th>Occupied</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+          <th>Light Intensity</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Pool Temperature Trends</h2>
+    <iframe
+      src="https://charts.mongodb.com/charts-waterbnb-rbviwlt/embed/charts?id=b910fd36-a323-418c-b7b9-f73e387d8fef&maxDataAge=3600&theme=light&autoRefresh=true"
+      width="100%"
+      height="400"
+      frameborder="0"
+      allowfullscreen
+    ></iframe>
+
+    <footer>
+      &copy; 2025 Pool Monitoring System | Real-Time Data Dashboard
+    </footer>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+      document
+        .getElementById("searchBar")
+        .addEventListener("input", (event) => {
+          const searchText = event.target.value.toLowerCase();
+          const rows = document.querySelectorAll("#poolTable tbody tr");
+          rows.forEach((row) => {
+            const poolId = row.children[0].textContent.toLowerCase();
+            row.style.display = poolId.includes(searchText) ? "" : "none";
+          });
+        });
+
+      const socket = io();
+
+      // Listen for real-time updates
+      socket.on("update", () => {
+        fetch("/api/pools")
+          .then((response) => response.json())
+          .then((data) => {
+            const tableBody = document.querySelector("#poolTable tbody");
+            tableBody.innerHTML = ""; // Clear existing rows
+            pools.forEach((pool) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+            <td>${pool.pool_id || "N/A"}</td>
+            <td>${
+              pool.temperature !== undefined
+                ? pool.temperature.toFixed(2)
+                : "N/A"
+            }</td>
+            <td>
+              <span class="badge ${
+                pool.hotspot ? "badge-hotspot-yes" : "badge-hotspot-no"
+              }">
+                ${pool.hotspot ? "Yes" : "No"}
+              </span>
+            </td>
+            <td>
+              <span class="badge ${
+                pool.occupied ? "badge-occupied-yes" : "badge-occupied-no"
+              }">
+                ${pool.occupied ? "Yes" : "No"}
+              </span>
+            </td>
+            <td>${pool.lat || "N/A"}</td>
+            <td>${pool.lon || "N/A"}</td>
+            <td>${pool.light_intensity || "N/A"}</td>
+          `;
+              tableBody.appendChild(row);
+            });
+          })
+          .catch((error) => console.error("Error fetching pool data:", error));
+      });
+    </script>
   </body>
 </html>
