@@ -125,6 +125,67 @@
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
+      // Fetch and populate table with data from /api/pools
+      function populateTable() {
+        fetch("/api/pools")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Fetched pools data:", data); // Debugging log
+            const tableBody = document.querySelector("#poolTable tbody");
+            tableBody.innerHTML = ""; // Clear existing rows
+
+            if (data.length === 0) {
+              const row = document.createElement("tr");
+              row.innerHTML = `<td colspan="7">No pools available</td>`;
+              tableBody.appendChild(row);
+              return;
+            }
+
+            // Populate rows
+            data.forEach((pool) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${pool.pool_id || "N/A"}</td>
+                <td>${
+                  pool.temperature !== undefined
+                    ? pool.temperature.toFixed(2)
+                    : "N/A"
+                }</td>
+                <td>
+                  <span class="badge ${
+                    pool.hotspot ? "badge-hotspot-yes" : "badge-hotspot-no"
+                  }">
+                    ${pool.hotspot ? "Yes" : "No"}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge ${
+                    pool.occupied ? "badge-occupied-yes" : "badge-occupied-no"
+                  }">
+                    ${pool.occupied ? "Yes" : "No"}
+                  </span>
+                </td>
+                <td>${pool.lat || "N/A"}</td>
+                <td>${pool.lon || "N/A"}</td>
+                <td>${pool.light_intensity || "N/A"}</td>
+              `;
+              tableBody.appendChild(row);
+            });
+          })
+          .catch((error) => console.error("Error fetching pool data:", error));
+      }
+
+      // Initialize table on page load
+      populateTable();
+
+      // Listen for real-time updates and repopulate table
+      const socket = io();
+      socket.on("update", () => {
+        console.log("Received update event");
+        populateTable();
+      });
+
+      // Add search functionality
       document
         .getElementById("searchBar")
         .addEventListener("input", (event) => {
@@ -135,48 +196,6 @@
             row.style.display = poolId.includes(searchText) ? "" : "none";
           });
         });
-
-      const socket = io();
-
-      // Listen for real-time updates
-      socket.on("update", () => {
-        fetch("/api/pools")
-          .then((response) => response.json())
-          .then((data) => {
-            const tableBody = document.querySelector("#poolTable tbody");
-            tableBody.innerHTML = ""; // Clear existing rows
-            pools.forEach((pool) => {
-              const row = document.createElement("tr");
-              row.innerHTML = `
-            <td>${pool.pool_id || "N/A"}</td>
-            <td>${
-              pool.temperature !== undefined
-                ? pool.temperature.toFixed(2)
-                : "N/A"
-            }</td>
-            <td>
-              <span class="badge ${
-                pool.hotspot ? "badge-hotspot-yes" : "badge-hotspot-no"
-              }">
-                ${pool.hotspot ? "Yes" : "No"}
-              </span>
-            </td>
-            <td>
-              <span class="badge ${
-                pool.occupied ? "badge-occupied-yes" : "badge-occupied-no"
-              }">
-                ${pool.occupied ? "Yes" : "No"}
-              </span>
-            </td>
-            <td>${pool.lat || "N/A"}</td>
-            <td>${pool.lon || "N/A"}</td>
-            <td>${pool.light_intensity || "N/A"}</td>
-          `;
-              tableBody.appendChild(row);
-            });
-          })
-          .catch((error) => console.error("Error fetching pool data:", error));
-      });
     </script>
   </body>
 </html>

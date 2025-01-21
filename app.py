@@ -53,6 +53,7 @@ db = client.WaterBnB
 
 collection = db["pools"]
 
+#-----------------------------------------------------------------------------
 # Fetch all documents
 documents = list(collection.find())
 if documents:
@@ -134,27 +135,57 @@ def get_pools():
 #If a request goes through multiple proxies, the IP addresses of each successive proxy is listed.
 # voir aussi le parsing !
 
-@app.route("/open", methods= ['GET', 'POST'])
-# @app.route('/open') # ou en GET seulement
+
+@app.route("/open", methods=['GET', 'POST'])
 def openthedoor():
-    idu = request.args.get('idu') # idu : clientid of the service
-    idswp = request.args.get('idswp')  #idswp : id of the swimming pool
+    idu = request.args.get('idu')  # User ID (clientid)
+    idswp = request.args.get('idswp')  # Pool ID
     session['idu'] = idu
     session['idswp'] = idswp
     print("\n Peer = {}".format(idu))
 
-    # ip addresses of the machine asking for opening
-    ip_addr = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+    # Check if the user exists in the users collection
+    user_exists = userscollection.find_one({"name": idu}) is not None
+    granted = "YES" if user_exists else "NO"
 
-    if userscollection.find_one({"name" : idu}) !=  None:
-        granted = "YES"
-    else:
-        granted = "NO"
-    return  jsonify({'idu' : session['idu'], 'idswp' : session['idswp'], "granted" : granted}), 200
+    # Log the access attempt in MongoDB
+    db.access_logs.insert_one({
+        "client_id": idu,
+        "pool_id": idswp,
+        "access_granted": granted,
+        "timestamp": datetime.datetime.utcnow()
+    })
+
+    # Return response
+    return jsonify({'idu': session['idu'], 'idswp': session['idswp'], "granted": granted}), 200
 
 # Test with => curl -X POST https://waterbnbf.onrender.com/open?who=gillou
 # Test with => curl https://waterbnbf.onrender.com/open?who=gillou
 
+
+#-----------------------------------------------------------------------------
+@app.route('/api/access_logs', methods=['GET'])
+def get_access_logs():
+    logs = list(db.access_logs.find({}, {'_id': 0}))  # Exclude MongoDB's `_id` field
+    return jsonify(logs)
+
+
+
+
+#-----------------------------------------------------------------------------
+#Inserting data manually using the following endpoint:
+@app.route('/api/add_pool', methods=['POST'])
+def add_pool():
+    try:
+        data = request.json
+        db.pools.insert_one(data)
+        return jsonify({"message": "Pool added successfully"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+
+#-----------------------------------------------------------------------------
 @app.route("/users")
 def lists_users(): # Liste des utilisateurs déclarés
     """
