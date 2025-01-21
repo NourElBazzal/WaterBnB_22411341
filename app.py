@@ -225,7 +225,8 @@ def openthedoor():
 
     # Publish the LED color change via MQTT
     mqtt_message = {"pool_id": idswp, "led_color": led_color}
-    mqtt_client.publish("uca/iot/piscine", json.dumps(mqtt_message))
+    result= mqtt_client.publish("uca/iot/piscine", json.dumps(mqtt_message))
+    print(f"Published MQTT message: {mqtt_message}, Result: {result}")
 
     # Log the access attempt in the access_logs collection
     db.access_logs.insert_one({
