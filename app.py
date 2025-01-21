@@ -105,7 +105,7 @@ socketio = SocketIO(app)
 def dashboard():
     return render_template('index.html')
 
-#Test with =>  curl https://waterbnbf.onrender.com/
+#Test with =>  curl curl -X POST https://waterbnb-22411341.onrender.com/
 
 #-----------------------------------------------------------------------------
 """
@@ -137,6 +137,7 @@ def get_pools():
 
 #-----------------------------------------------------------------------------
 # Add users to the users pool 
+# Test with curl -X POST https://waterbnb-22411341.onrender.com/api/add_user
 @app.route('/api/add_user', methods=['POST'])
 def add_users_from_pools():
     try:
@@ -180,7 +181,7 @@ def openthedoor():
     print("\n Peer = {}".format(idu))
 
     # Check if the user exists in the users collection
-    user_exists = userscollection.find_one({"name": idu}) is not None
+    user_exists = userscollection.find_one({"num": idswp}) is not None
     granted = "YES" if user_exists else "NO"
 
     # Log the access attempt in MongoDB
