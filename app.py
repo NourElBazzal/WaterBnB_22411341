@@ -186,7 +186,7 @@ def openthedoor():
     led_color = "green"  # Default color is green for available
 
     # Step 1: Check if the user exists in the users collection
-    user_exists = userscollection.find_one({"name": idu}) is not None
+    user_exists = userscollection.find_one({"num": idu}) is not None
     if not user_exists:
         feedback_message = "User is not registered."
         led_color = "red"  # Deny access if user is not registered
