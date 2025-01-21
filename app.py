@@ -178,22 +178,61 @@ def openthedoor():
     idswp = request.args.get('idswp')  # Pool ID
     session['idu'] = idu
     session['idswp'] = idswp
-    print("\n Peer = {}".format(idu))
+    print(f"\nAccess request from User: {idu} for Pool: {idswp}")
 
-    # Check if the user exists in the users collection
-    user_exists = userscollection.find_one({"num": idswp}) is not None
-    granted = "YES" if user_exists else "NO"
+    # Initialize response data
+    granted = "NO"
+    feedback_message = ""
+    led_color = "green"  # Default color is green for available
 
-    # Log the access attempt in MongoDB
+    # Step 1: Check if the user exists in the users collection
+    user_exists = userscollection.find_one({"name": idu}) is not None
+    if not user_exists:
+        feedback_message = "User is not registered."
+        led_color = "red"  # Deny access if user is not registered
+    else:
+        # Step 2: Check if the pool exists and is not occupied
+        pool = db.pools.find_one({"pool_id": idswp})
+        if pool is None:
+            feedback_message = "Pool does not exist."
+            led_color = "red"  # Deny access if pool does not exist
+        elif pool.get("occuped") == True:
+            feedback_message = "Pool is already occupied."
+            led_color = "red"  # Deny access if pool is occupied
+
+            # Schedule LED reset to green after 30 seconds
+            threading.Thread(target=reset_led, args=(idswp,)).start()
+        else:
+            # Access granted
+            granted = "YES"
+            feedback_message = "Access granted. Pool is now occupied."
+            led_color = "yellow"  # Occupied pool color
+
+            # Update pool status to occupied in MongoDB
+            db.pools.update_one({"pool_id": idswp}, {"$set": {"occuped": True}})
+
+    # Publish the LED color change via MQTT
+    mqtt_message = {"pool_id": idswp, "led_color": led_color}
+    mqtt_client.publish("uca/iot/piscine", json.dumps(mqtt_message))
+
+    # Log the access attempt in the access_logs collection
     db.access_logs.insert_one({
         "client_id": idu,
         "pool_id": idswp,
         "access_granted": granted,
+        "feedback_message": feedback_message,
         "timestamp": datetime.datetime.utcnow()
     })
 
     # Return response
-    return jsonify({'idu': session['idu'], 'idswp': session['idswp'], "granted": granted}), 200
+    return jsonify({
+        "idu": session['idu'],
+        "idswp": session['idswp'],
+        "granted": granted,
+        "feedback": feedback_message
+    }), 200
+
+
 
 # Test with => curl -X POST http://127.0.0.1:5000/open?idu=22411341&idswp=P_22411341
 # Test with => curl -X POST https://waterbnb-22411341.onrender.com/open?idu=22411341&idswp=P_22411341
@@ -201,7 +240,6 @@ def openthedoor():
 
 # Test with => curl -X POST https://waterbnbf.onrender.com/open?who=gillou
 # Test with => curl https://waterbnbf.onrender.com/open?who=gillou
-
 
 
 #-----------------------------------------------------------------------------
