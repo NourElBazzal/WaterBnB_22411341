@@ -135,6 +135,41 @@ def get_pools():
 #If a request goes through multiple proxies, the IP addresses of each successive proxy is listed.
 # voir aussi le parsing !
 
+#-----------------------------------------------------------------------------
+# Add users to the users pool 
+@app.route('/api/add_user', methods=['POST'])
+def add_users_from_pools():
+    try:
+        # Fetch all pools from the collection
+        pools = list(db.pools.find({}, {"_id": 0, "user": 1, "pool_id": 1}))
+
+        # Track added users
+        added_users = []
+        existing_users = []
+
+        for pool in pools:
+            user_name = pool.get("user")
+            user_id = pool.get("pool_id")
+
+            if user_name and user_id:
+                # Check if the user already exists in the users collection
+                if not userscollection.find_one({"name": user_name}):
+                    # Add user to the users collection
+                    userscollection.insert_one({"name": user_name, "num": user_id})
+                    added_users.append(user_name)
+                else:
+                    existing_users.append(user_name)
+
+        return jsonify({
+            "message": "User addition completed",
+            "added_users": added_users,
+            "existing_users": existing_users
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 @app.route("/open", methods=['GET', 'POST'])
 def openthedoor():
@@ -159,11 +194,18 @@ def openthedoor():
     # Return response
     return jsonify({'idu': session['idu'], 'idswp': session['idswp'], "granted": granted}), 200
 
+# Test with => curl -X POST http://127.0.0.1:5000/open?idu=22411341&idswp=P_22411341
+# Test with => curl -X POST https://waterbnb-22411341.onrender.com/open?idu=22411341&idswp=P_22411341
+
+
 # Test with => curl -X POST https://waterbnbf.onrender.com/open?who=gillou
 # Test with => curl https://waterbnbf.onrender.com/open?who=gillou
 
 
+
 #-----------------------------------------------------------------------------
+#Test with curl -X POST http://127.0.0.1:5000/api/add_user
+#Test with curl -X POST https://waterbnb-22411341.onrender.com/api/add_user
 @app.route('/api/access_logs', methods=['GET'])
 def get_access_logs():
     logs = list(db.access_logs.find({}, {'_id': 0}))  # Exclude MongoDB's `_id` field
@@ -240,11 +282,12 @@ def handle_mqtt_message(client, userdata, msg):
 
         # Extract pool details
         pool_id = data["info"]["ident"]
+        user= data["info"]["user"]
         lat = data.get("location", {}).get("gps", {}).get("lat", None)
         lon = data.get("location", {}).get("gps", {}).get("lon", None)
         temperature = data["status"]["temperature"]
-        light_intensity = data["status"]["light_intensity"]
-        fire_detected = data["status"]["fire_detected"]
+        #light_intensity = data["status"]["light_intensity"]
+        #fire_detected = data["status"]["fire_detected"]
         hotspot = data["piscine"]["hotspot"]
         occuped = data["piscine"]["occuped"]
         
@@ -256,8 +299,9 @@ def handle_mqtt_message(client, userdata, msg):
                     "lat": lat,
                     "lon": lon,
                     "temperature": temperature,
-                    "light_intensity": light_intensity,
-                    "fire_detected": fire_detected,
+                    #"light_intensity": light_intensity,
+                    #"fire_detected": fire_detected,
+                    "user": user,
                     "hotspot": hotspot,
                     "occuped": occuped,
                     "last_updated": datetime.datetime.utcnow()
