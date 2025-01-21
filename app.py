@@ -1,6 +1,7 @@
 import json
 import csv
-import math
+import threading
+import time
 
 from flask import request
 from flask import jsonify
@@ -169,6 +170,17 @@ def add_users_from_pools():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+#-----------------------------------------------------------------------------
+#Resets the LED color for a pool to green after 30 seconds.
+def reset_led(pool_id):
+    time.sleep(30)  # Wait for 30 seconds
+    mqtt_message = {"pool_id": pool_id, "led_color": "green"}
+    
+    # Publish the reset message to MQTT
+    mqtt_client.publish("uca/iot/piscine", json.dumps(mqtt_message))
+    print(f"LED for Pool {pool_id} reset to green.")
 
 
 
