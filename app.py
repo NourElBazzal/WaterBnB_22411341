@@ -12,7 +12,6 @@ from flask_socketio import SocketIO
 
 
 #https://python-adv-web-apps.readthedocs.io/en/latest/flask.html
-
 #https://www.emqx.com/en/blog/how-to-use-mqtt-in-flask
 from flask_mqtt import Mqtt
 from flask_pymongo import PyMongo
@@ -29,7 +28,6 @@ cluster_url = "iot.rll4q.mongodb.net"
 database_name = "WaterBnB"
 
 connection_string = f"mongodb+srv://{username}:{password}@{cluster_url}/{database_name}?retryWrites=true&w=majority"
-
 
 
 # Connect to Cluster Mongo : attention aux permissions "network"/MONGO  !!!!!!!!!!!!!!!!
@@ -109,35 +107,13 @@ def dashboard():
 #Test with =>  curl curl -X POST https://waterbnb-22411341.onrender.com/
 
 #-----------------------------------------------------------------------------
-"""
-#https://stackabuse.com/how-to-get-users-ip-address-using-flask/
-@app.route("/ask_for_access", methods=["POST"])
-def get_my_ip():
-    ip_addr = request.remote_addr
-    return jsonify({'ip asking ': ip_addr}), 200
-
-# Test/Compare with  =>curl  https://httpbin.org/ip
-
-#Proxies can make this a little tricky, make sure to check out ProxyFix
-#(Flask docs) if you are using one.
-#Take a look at request.environ in your particular environment :
-@app.route("/ask_for_access", methods=["POST"])
-def client():
-    ip_addr = request.environ['REMOTE_ADDR']
-    return '<h1> Your IP address is:' + ip_addr
-"""
-
 @app.route('/api/pools', methods=['GET'])
 def get_pools():
     pools = list(db.pools.find({}, {'_id': 0}))  # Exclude MongoDB's _id field
     return jsonify(pools)
 
-#https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
-#If a request goes through multiple proxies, the IP addresses of each successive proxy is listed.
-# voir aussi le parsing !
-
 #-----------------------------------------------------------------------------
-# Add users to the users pool 
+# Add users to the users pool: i added this endpoint since i had problems with the csv file when trying to add its data to the users collection (yes i set the Admin as True)
 # Test with curl -X POST https://waterbnb-22411341.onrender.com/api/add_user
 @app.route('/api/add_user', methods=['POST'])
 def add_users_from_pools():
@@ -245,26 +221,12 @@ def openthedoor():
         "feedback": feedback_message
     }), 200
 
-
-
-# Test with => curl -X POST http://127.0.0.1:5000/open?idu=22411341&idswp=P_22411341
-# Test with => curl -X POST https://waterbnb-22411341.onrender.com/open?idu=22411341&idswp=P_22411341
-
-
-# Test with => curl -X POST https://waterbnbf.onrender.com/open?who=gillou
-# Test with => curl https://waterbnbf.onrender.com/open?who=gillou
-
-
 #-----------------------------------------------------------------------------
-#Test with curl -X POST http://127.0.0.1:5000/api/add_user
-#Test with curl -X POST https://waterbnb-22411341.onrender.com/api/add_user
+#Test with https://waterbnb-22411341.onrender.com/api/access_logs
 @app.route('/api/access_logs', methods=['GET'])
 def get_access_logs():
     logs = list(db.access_logs.find({}, {'_id': 0}))  # Exclude MongoDB's `_id` field
     return jsonify(logs)
-
-
-
 
 #-----------------------------------------------------------------------------
 #Inserting data manually using the following endpoint:
@@ -277,13 +239,11 @@ def add_pool():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
-
 #-----------------------------------------------------------------------------
 @app.route("/users")
 def lists_users(): # Liste des utilisateurs déclarés
     """
-    curl https://waterbnbf.onrender.com/users
+    https://waterbnb-22411341.onrender.com/users
     """
     todos = userscollection.find()
     return jsonify([todo['name'] for todo in todos])

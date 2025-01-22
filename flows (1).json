@@ -1,0 +1,397 @@
+[
+    {
+        "id": "91d3e3e2f3d403b2",
+        "type": "tab",
+        "label": "Swimming Pools",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "e8451161fd518278",
+        "type": "inject",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 190,
+        "y": 220,
+        "wires": [
+            [
+                "00cfe8bb3c2ae70c"
+            ]
+        ]
+    },
+    {
+        "id": "00cfe8bb3c2ae70c",
+        "type": "function",
+        "z": "91d3e3e2f3d403b2",
+        "name": "Téléportation",
+        "func": "// create random position\nvar lat = 43.61999752 + Math.random() * 0.1;\nvar lon = 7.0499998 + Math.random() * 0.1;\nmsg.payload={\n    lat:lat, \n    lon:lon, \n    name:\"Nour\", \n    description: \"Temperature in my swimming pool\",\n    value: 20.5,\n    unit: \"°C\",\n    icon:\"female\", \n    color:\"#000\"};\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 280,
+        "wires": [
+            [
+                "4fbe6756507df24d",
+                "42b8ea3596ba0a99",
+                "26974a09caba3580"
+            ]
+        ]
+    },
+    {
+        "id": "6b986ec77b36c4d7",
+        "type": "ui_button",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "group": "c381d97f0297a045",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Move Gilles",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "fa-male",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 190,
+        "y": 280,
+        "wires": [
+            [
+                "00cfe8bb3c2ae70c"
+            ]
+        ]
+    },
+    {
+        "id": "925f3b7965da3271",
+        "type": "mqtt in",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "topic": "uca/iot/piscine",
+        "qos": "0",
+        "datatype": "utf8",
+        "broker": "2440edb5d689cbd1",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 170,
+        "y": 560,
+        "wires": [
+            [
+                "c9af18af38a83c29",
+                "eef78ebae73f06df"
+            ]
+        ]
+    },
+    {
+        "id": "26974a09caba3580",
+        "type": "debug",
+        "z": "91d3e3e2f3d403b2",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "c9af18af38a83c29",
+        "type": "json",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 470,
+        "y": 600,
+        "wires": [
+            [
+                "d4e00a19d43a8be2"
+            ]
+        ]
+    },
+    {
+        "id": "26dc85a71fbf815e",
+        "type": "ui_button",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "group": "c381d97f0297a045",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Reset",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 181.5,
+        "y": 376,
+        "wires": [
+            [
+                "d22925aa4c16abf6"
+            ]
+        ]
+    },
+    {
+        "id": "d22925aa4c16abf6",
+        "type": "function",
+        "z": "91d3e3e2f3d403b2",
+        "name": "Reset Layer",
+        "func": "// clear the \"by default\" layer \nmsg.payload = {\"command\": { \"clear\": \"unknown\" } };\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 384.5,
+        "y": 349,
+        "wires": [
+            [
+                "42b8ea3596ba0a99"
+            ]
+        ]
+    },
+    {
+        "id": "d4e00a19d43a8be2",
+        "type": "function",
+        "z": "91d3e3e2f3d403b2",
+        "name": "json adapt",
+        "func": "/* \n* This node adapts the JSON format from the ESP to the one expected by the map \n* and adds a clickable hyperlink for each pool marker.\n*/\n\n//http://stevesnoderedguide.com/node-red-functions\nvar nmsg = { // on cree un nouveau message nodered\n    topic: msg.topic  // on garde le vieux topic\n    };\n\n// Gestion de l'occupation\nvar busy;\n\nif (msg.payload.piscine.occuped === false)\n  busy = \"battery-empty\";\nelse\n  busy = \"battery-full\";\n\n\nvar hsc;\nif (msg.payload.piscine.hotspot === false)\n  hsc = \"Blue\";\nelse\n  hsc = \"Red\";\n\n// Get client ID from global variable (unique to the user)\nvar clientid = global.get(\"cliendid\") || \"anonymous\";\n\n// Construct the hyperlink for each pool\nvar hyperlink = `https://waterbnb-22411341.onrender.com/open?idu=${clientid}&idswp=${msg.payload.info.ident}`;\n\nnmsg.payload = { // on modifie/adapte la payload\n    layer : \"swimming pools\",\n    name : msg.payload.info.ident,\n    \"web-link\": hyperlink,\n    description: msg.payload.info.user,\n    unit:\"C\",\n    color: \"#000\",\n    value: msg.payload.status.temperature,\n    lat: msg.payload.location.gps.lat,\n    lon: msg.payload.location.gps.lon,\n    iconColor : hsc,\n    //icon: \"male\",\n    icon: busy    \n}\n\nreturn nmsg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 560,
+        "wires": [
+            [
+                "42b8ea3596ba0a99",
+                "26974a09caba3580"
+            ]
+        ]
+    },
+    {
+        "id": "68db9c99cb7efd02",
+        "type": "comment",
+        "z": "91d3e3e2f3d403b2",
+        "name": "Fichier mapflow.json  : How to embed Map in Dashboard and connect it via MQTT.",
+        "info": "This example shows how to embed the Worldmap \nwithin the `node-red-dashboard`\n\nThe  flow creates a dashboard button that \ngenerates a randon position, with the required \nicon, and passes that to the worldmap. The\nmap is configured to automatically pan to the\nposition of any point that arrives.\n",
+        "x": 380,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "4fbe6756507df24d",
+        "type": "worldmap-tracks",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "depth": "6",
+        "layer": "combined",
+        "smooth": false,
+        "x": 593,
+        "y": 232,
+        "wires": [
+            [
+                "42b8ea3596ba0a99"
+            ]
+        ]
+    },
+    {
+        "id": "42b8ea3596ba0a99",
+        "type": "ui_worldmap",
+        "z": "91d3e3e2f3d403b2",
+        "group": "c381d97f0297a045",
+        "order": 4,
+        "width": "0",
+        "height": "0",
+        "name": "",
+        "lat": "43.61999752",
+        "lon": "7.0499998",
+        "zoom": "11",
+        "layer": "OSMC",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "show",
+        "layers": "show",
+        "panit": "true",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "deg",
+        "showgrid": "true",
+        "allowFileDrop": "false",
+        "path": "/worldmap",
+        "overlist": "DR,CO,RA,DN,TL,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriO,EsriDG,NatGeo,UKOS,OpTop",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 860,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "eef78ebae73f06df",
+        "type": "debug",
+        "z": "91d3e3e2f3d403b2",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "fe712f636a1c5f05",
+        "type": "ui_form",
+        "z": "91d3e3e2f3d403b2",
+        "name": "",
+        "label": "WaterBnB Client Identification",
+        "group": "c381d97f0297a045",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "options": [
+            {
+                "label": "Client ID",
+                "value": "clientid",
+                "type": "text",
+                "required": true,
+                "rows": null
+            }
+        ],
+        "formValue": {
+            "clientid": ""
+        },
+        "payload": "",
+        "submit": "submit",
+        "cancel": "cancel",
+        "topic": "topic",
+        "topicType": "msg",
+        "splitLayout": "",
+        "className": "",
+        "x": 250,
+        "y": 460,
+        "wires": [
+            [
+                "6ef3832200d1fcf0",
+                "eef78ebae73f06df"
+            ]
+        ]
+    },
+    {
+        "id": "6ef3832200d1fcf0",
+        "type": "function",
+        "z": "91d3e3e2f3d403b2",
+        "name": "Store Client ID",
+        "func": "// Store the client ID in a global variable\nglobal.set(\"cliendid\", msg.payload.clientid);\nnode.warn(\"Client ID set: \" + msg.payload.clientid); // Debug log\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c381d97f0297a045",
+        "type": "ui_group",
+        "z": "91d3e3e2f3d403b2",
+        "name": "SP",
+        "tab": "580b23053f774d4a",
+        "order": 1,
+        "disp": true,
+        "width": "25",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "2440edb5d689cbd1",
+        "type": "mqtt-broker",
+        "name": "Mosquitto broker",
+        "broker": "test.mosquitto.org",
+        "port": "1883",
+        "tls": "",
+        "clientid": "NOUR",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "580b23053f774d4a",
+        "type": "ui_tab",
+        "z": "91d3e3e2f3d403b2",
+        "name": "Tab of  Swimming Pools",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
