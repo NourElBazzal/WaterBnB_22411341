@@ -6,20 +6,28 @@ Nour El Bazzal
 ---
 
 **Focus Areas**
-+Advanced MongoDB Integration
-1.Efficient data import and duplicate prevention mechanisms
-2.Pool occupancy tracking and status updates
-+Access Control and Logging
-1.Multi-step validation for pool access requests.
-2.Automatic logging of all access attempts
-+RESTful API Design
-1.Well-structured API endpoints for pools, users, and access logs.
-+Pool Dashboard(index.html)
-1.A searchable pool data table with dynamic updated via WebSockets.
-2.Embedded MongoDB charts for real-time data visualization.
-3.Interactove badges for pool occupancy and hotspot status.
-4.Input search functionality to filter pools by ID
-5.JavaScript integration to fetch and display data from /api/pools.
+
+- Advanced MongoDB Integration
+
+1. Efficient data import and duplicate prevention mechanisms
+2. Pool occupancy tracking and status updates
+
+- Access Control and Logging
+
+1. Multi-step validation for pool access requests.
+2. Automatic logging of all access attempts
+
+- RESTful API Design
+
+1. Well-structured API endpoints for pools, users, and access logs.
+
+- Pool Dashboard(index.html)
+
+1. A searchable pool data table with dynamic updated via WebSockets.
+2. Embedded MongoDB charts for real-time data visualization.
+3. Interactove badges for pool occupancy and hotspot status.
+4. Input search functionality to filter pools by ID
+5. JavaScript integration to fetch and display data from /api/pools.
 
 ---
 
