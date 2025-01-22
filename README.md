@@ -36,7 +36,7 @@ Nour El Bazzal
 **Note**
 I wrote all the functions for the led strip color changes on the flask app and the .ino file but it's not working.
 But when testing with mosquitto with the following command: mosquitto_pub -h test.mosquitto.org -t uca/iot/piscine -m "{\"pool_id\": \"P_22411341\", \"led_color\": \"yellow\"}" , it's working fine and the led strip is changing its color as it should be.
-My serial monitor is only displaying one pool from the real-time connected pools, and i tried to fix this issue but it didn't work. I think that's why the led strip is not changing colors when trying to access a pool. :sad:
+My serial monitor is only displaying one pool from the real-time connected pools, and i tried to fix this issue but it didn't work. I think that's why the led strip is not changing colors when trying to access a pool. :disappointed:
 
 ---
 
